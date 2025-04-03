@@ -8,9 +8,9 @@ const morgan_1 = __importDefault(require("morgan"));
 const cors_1 = __importDefault(require("cors"));
 const body_parser_1 = __importDefault(require("body-parser"));
 const cookie_parser_1 = __importDefault(require("cookie-parser"));
+const notFound_1 = __importDefault(require("./app/middlewares/notFound"));
 // import router from './app/routes';
-// import notFound from './app/middlewares/notFound';
-// import globalErrorHandler from './app/middlewares/globalErrorHandler';
+const globalErrorHandler_1 = __importDefault(require("./app/middlewares/globalErrorHandler"));
 const app = (0, express_1.default)();
 app.use((0, morgan_1.default)('dev'));
 app.use(express_1.default.json({ limit: '50mb' }));
@@ -26,7 +26,7 @@ app.use((0, cors_1.default)({
 // application routes
 // app.use('/api/v1', router);
 //global error handler
-// app.use(globalErrorHandler);
+app.use(globalErrorHandler_1.default);
 // handle not found routes
-// app.use(notFound);
+app.use(notFound_1.default);
 exports.default = app;
