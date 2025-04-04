@@ -20,12 +20,14 @@ process.on('uncaughtException', (error) => {
     console.log('Uncaught Exception! Shutting down the server due to uncaught exception...', error);
     process.exit(1);
 });
-let server = http_1.default.createServer(app_1.default);
+const server = http_1.default.createServer(app_1.default);
+// Initialize socket.io
 (0, socket_1.initializeSocket)(server);
 function startServer() {
     return __awaiter(this, void 0, void 0, function* () {
-        server = app_1.default.listen(config_1.default.port, () => {
+        server.listen(config_1.default.port, () => {
             console.log(`🎯 Server listening on port: ${config_1.default.port}`);
+            console.log(`🔌 Socket.io server initialized`);
         });
         process.on('unhandledRejection', (error) => {
             if (server) {
@@ -42,7 +44,10 @@ function startServer() {
 }
 startServer();
 process.on('SIGTERM', () => {
+    console.log('SIGTERM received. Shutting down gracefully...');
     if (server) {
-        server.close();
+        server.close(() => {
+            console.log('Server closed');
+        });
     }
 });

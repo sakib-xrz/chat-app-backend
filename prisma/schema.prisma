@@ -17,17 +17,40 @@ enum ChatType {
   GROUP
 }
 
+enum MessageStatusType {
+  SENT
+  DELIVERED
+  READ
+}
+
+enum UserRole {
+  MEMBER
+  ADMIN
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  FILE
+}
+
 model User {
-  id             String         @id @default(uuid())
-  email          String         @unique
-  password       String
-  name           String
-  gender         String
-  phone          String?
-  image          String?
-  created_at     DateTime       @default(now())
-  updated_at     DateTime       @updatedAt
-  chat_room_user ChatRoomUser[]
+  id              String          @id @default(uuid())
+  email           String          @unique
+  password        String
+  name            String
+  gender          String
+  phone           String?
+  image           String?
+  is_online       Boolean         @default(false)
+  last_seen       DateTime?
+  socket_id       String?
+  created_at      DateTime        @default(now())
+  updated_at      DateTime        @updatedAt
+  chat_room_user  ChatRoomUser[]
+  sent_messages   ChatMessage[]   @relation("SentMessages")
+  message_status  MessageStatus[] @relation("MessageStatus")
+  typing_in_rooms TypingStatus[]
 
   @@map("users")
 }
@@ -40,30 +63,70 @@ model ChatRoom {
   updated_at   DateTime       @updatedAt
   messages     ChatMessage[]
   participants ChatRoomUser[]
+  typing_users TypingStatus[]
 
   @@map("chat_rooms")
 }
 
 model ChatMessage {
-  id         String   @id @default(uuid())
+  id         String          @id @default(uuid())
   content    String
   sender_id  String
   room_id    String
-  created_at DateTime @default(now())
+  type       MessageType     @default(TEXT)
+  file_url   String?
+  edited     Boolean         @default(false)
+  deleted    Boolean         @default(false)
+  created_at DateTime        @default(now())
+  updated_at DateTime        @updatedAt
+  read_by    MessageStatus[]
 
-  room ChatRoom @relation(fields: [room_id], references: [id])
+  room   ChatRoom @relation(fields: [room_id], references: [id])
+  sender User     @relation("SentMessages", fields: [sender_id], references: [id])
 
   @@map("chat_messages")
+}
+
+model MessageStatus {
+  id         String            @id @default(uuid())
+  message_id String
+  user_id    String
+  status     MessageStatusType @default(SENT)
+  created_at DateTime          @default(now())
+  updated_at DateTime          @updatedAt
+
+  message ChatMessage @relation(fields: [message_id], references: [id], onDelete: Cascade)
+  user    User        @relation("MessageStatus", fields: [user_id], references: [id])
+
+  @@unique([message_id, user_id])
+  @@map("message_status")
 }
 
 model ChatRoomUser {
   id         String   @id @default(uuid())
   room_id    String
   user_id    String
+  role       UserRole @default(MEMBER)
   created_at DateTime @default(now())
 
-  room ChatRoom @relation(fields: [room_id], references: [id])
+  room ChatRoom @relation(fields: [room_id], references: [id], onDelete: Cascade)
   user User     @relation(fields: [user_id], references: [id])
 
+  @@unique([room_id, user_id])
   @@map("chat_room_users")
+}
+
+model TypingStatus {
+  id         String   @id @default(uuid())
+  room_id    String
+  user_id    String
+  is_typing  Boolean  @default(false)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  room ChatRoom @relation(fields: [room_id], references: [id], onDelete: Cascade)
+  user User     @relation(fields: [user_id], references: [id])
+
+  @@unique([room_id, user_id])
+  @@map("typing_status")
 }

@@ -11,13 +11,15 @@ process.on('uncaughtException', (error) => {
   process.exit(1);
 });
 
-let server = http.createServer(app);
+const server = http.createServer(app);
 
+// Initialize socket.io
 initializeSocket(server);
 
 async function startServer() {
-  server = app.listen(config.port, () => {
+  server.listen(config.port, () => {
     console.log(`🎯 Server listening on port: ${config.port}`);
+    console.log(`🔌 Socket.io server initialized`);
   });
 
   process.on('unhandledRejection', (error) => {
@@ -38,7 +40,10 @@ async function startServer() {
 startServer();
 
 process.on('SIGTERM', () => {
+  console.log('SIGTERM received. Shutting down gracefully...');
   if (server) {
-    server.close();
+    server.close(() => {
+      console.log('Server closed');
+    });
   }
 });

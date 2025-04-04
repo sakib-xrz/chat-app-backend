@@ -35,7 +35,7 @@ const GetRoomsByUserId = (0, catchAsync_1.default)((req, res) => __awaiter(void 
     });
 }));
 const SendMessage = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const message = yield chat_services_1.default.SendMessage(req.body);
+    const message = yield chat_services_1.default.SendMessage(Object.assign(Object.assign({}, req.body), { sender_id: req.user.id }));
     (0, sendResponse_1.default)(res, {
         success: true,
         statusCode: http_status_1.default.CREATED,
@@ -44,7 +44,7 @@ const SendMessage = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, vo
     });
 }));
 const GetMessagesByRoomId = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const messages = yield chat_services_1.default.GetMessagesByRoomId(req.params.roomId);
+    const messages = yield chat_services_1.default.GetMessagesByRoomId(req.params.roomId, req.user.id);
     (0, sendResponse_1.default)(res, {
         success: true,
         statusCode: http_status_1.default.OK,
@@ -52,10 +52,80 @@ const GetMessagesByRoomId = (0, catchAsync_1.default)((req, res) => __awaiter(vo
         data: messages,
     });
 }));
+const EditMessage = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const message = yield chat_services_1.default.EditMessage(Object.assign(Object.assign({}, req.body), { sender_id: req.user.id }));
+    (0, sendResponse_1.default)(res, {
+        success: true,
+        statusCode: http_status_1.default.OK,
+        message: 'Message edited successfully',
+        data: message,
+    });
+}));
+const DeleteMessage = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const result = yield chat_services_1.default.DeleteMessage(Object.assign(Object.assign({}, req.body), { sender_id: req.user.id }));
+    (0, sendResponse_1.default)(res, {
+        success: true,
+        statusCode: http_status_1.default.OK,
+        message: 'Message deleted successfully',
+        data: result,
+    });
+}));
+const MarkMessageAsRead = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const result = yield chat_services_1.default.MarkMessageAsRead(Object.assign(Object.assign({}, req.body), { user_id: req.user.id }));
+    (0, sendResponse_1.default)(res, {
+        success: true,
+        statusCode: http_status_1.default.OK,
+        message: 'Message marked as read',
+        data: result,
+    });
+}));
+const AddUserToRoom = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const result = yield chat_services_1.default.AddUserToRoom(req.body, req.user.id);
+    (0, sendResponse_1.default)(res, {
+        success: true,
+        statusCode: http_status_1.default.OK,
+        message: 'User added to room successfully',
+        data: result,
+    });
+}));
+const RemoveUserFromRoom = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const result = yield chat_services_1.default.RemoveUserFromRoom(req.body, req.user.id);
+    (0, sendResponse_1.default)(res, {
+        success: true,
+        statusCode: http_status_1.default.OK,
+        message: 'User removed from room successfully',
+        data: result,
+    });
+}));
+const UpdateRoomAdmin = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const result = yield chat_services_1.default.UpdateRoomAdmin(req.body, req.user.id);
+    (0, sendResponse_1.default)(res, {
+        success: true,
+        statusCode: http_status_1.default.OK,
+        message: 'User role updated successfully',
+        data: result,
+    });
+}));
+const GetRoomDetails = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const room = yield chat_services_1.default.GetRoomDetails(req.params.roomId, req.user.id);
+    (0, sendResponse_1.default)(res, {
+        success: true,
+        statusCode: http_status_1.default.OK,
+        message: 'Room details fetched successfully',
+        data: room,
+    });
+}));
 const ChatController = {
     CreateRoom,
     GetRoomsByUserId,
     SendMessage,
     GetMessagesByRoomId,
+    EditMessage,
+    DeleteMessage,
+    MarkMessageAsRead,
+    AddUserToRoom,
+    RemoveUserFromRoom,
+    UpdateRoomAdmin,
+    GetRoomDetails,
 };
 exports.default = ChatController;
