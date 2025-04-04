@@ -4,7 +4,7 @@ import cors from 'cors';
 import bodyParser from 'body-parser';
 import cookieParser from 'cookie-parser';
 import notFound from './app/middlewares/notFound';
-// import router from './app/routes';
+import router from './app/routes';
 import globalErrorHandler from './app/middlewares/globalErrorHandler';
 
 const app = express();
@@ -25,7 +25,7 @@ app.use(
 );
 
 // application routes
-// app.use('/api/v1', router);
+app.use('/api/v1', router);
 
 //global error handler
 app.use(globalErrorHandler);

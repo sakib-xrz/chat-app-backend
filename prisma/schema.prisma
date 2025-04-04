@@ -25,3 +25,10 @@ model User {
 
   @@map("users")
 }
+
+model Chat {
+  id         String   @id @default(uuid())
+  content    String
+  sender_id  String
+  created_at DateTime @default(now())
+}

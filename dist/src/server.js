@@ -14,11 +14,14 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const app_1 = __importDefault(require("./app"));
 const config_1 = __importDefault(require("./app/config"));
+const http_1 = __importDefault(require("http"));
+const socket_1 = require("./socket");
 process.on('uncaughtException', (error) => {
     console.log('Uncaught Exception! Shutting down the server due to uncaught exception...', error);
     process.exit(1);
 });
-let server = null;
+let server = http_1.default.createServer(app_1.default);
+(0, socket_1.initializeSocket)(server);
 function startServer() {
     return __awaiter(this, void 0, void 0, function* () {
         server = app_1.default.listen(config_1.default.port, () => {

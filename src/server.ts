@@ -1,7 +1,7 @@
- 
-import { Server } from 'http';
 import app from './app';
 import config from './app/config';
+import http from 'http';
+import { initializeSocket } from './socket';
 
 process.on('uncaughtException', (error) => {
   console.log(
@@ -11,7 +11,9 @@ process.on('uncaughtException', (error) => {
   process.exit(1);
 });
 
-let server: Server | null = null;
+let server = http.createServer(app);
+
+initializeSocket(server);
 
 async function startServer() {
   server = app.listen(config.port, () => {
