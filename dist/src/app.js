@@ -9,7 +9,7 @@ const cors_1 = __importDefault(require("cors"));
 const body_parser_1 = __importDefault(require("body-parser"));
 const cookie_parser_1 = __importDefault(require("cookie-parser"));
 const notFound_1 = __importDefault(require("./app/middlewares/notFound"));
-// import router from './app/routes';
+const routes_1 = __importDefault(require("./app/routes"));
 const globalErrorHandler_1 = __importDefault(require("./app/middlewares/globalErrorHandler"));
 const app = (0, express_1.default)();
 app.use((0, morgan_1.default)('dev'));
@@ -24,7 +24,7 @@ app.use((0, cors_1.default)({
     credentials: true,
 }));
 // application routes
-// app.use('/api/v1', router);
+app.use('/api/v1', routes_1.default);
 //global error handler
 app.use(globalErrorHandler_1.default);
 // handle not found routes

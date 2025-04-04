@@ -12,23 +12,58 @@ enum Gender {
   FEMALE
 }
 
+enum ChatType {
+  ONE_TO_ONE
+  GROUP
+}
+
 model User {
-  id         String   @id @default(uuid())
-  email      String   @unique
-  password   String
-  name       String
-  gender     String
-  phone      String?
-  image      String?
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+  id             String         @id @default(uuid())
+  email          String         @unique
+  password       String
+  name           String
+  gender         String
+  phone          String?
+  image          String?
+  created_at     DateTime       @default(now())
+  updated_at     DateTime       @updatedAt
+  chat_room_user ChatRoomUser[]
 
   @@map("users")
 }
 
-model Chat {
+model ChatRoom {
+  id           String         @id @default(uuid())
+  name         String?
+  type         ChatType       @default(ONE_TO_ONE)
+  created_at   DateTime       @default(now())
+  updated_at   DateTime       @updatedAt
+  messages     ChatMessage[]
+  participants ChatRoomUser[]
+
+  @@map("chat_rooms")
+}
+
+model ChatMessage {
   id         String   @id @default(uuid())
   content    String
   sender_id  String
+  room_id    String
   created_at DateTime @default(now())
+
+  room ChatRoom @relation(fields: [room_id], references: [id])
+
+  @@map("chat_messages")
+}
+
+model ChatRoomUser {
+  id         String   @id @default(uuid())
+  room_id    String
+  user_id    String
+  created_at DateTime @default(now())
+
+  room ChatRoom @relation(fields: [room_id], references: [id])
+  user User     @relation(fields: [user_id], references: [id])
+
+  @@map("chat_room_users")
 }

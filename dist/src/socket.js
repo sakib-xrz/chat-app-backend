@@ -25,17 +25,31 @@ function initializeSocket(server) {
     });
     io.on('connection', (socket) => {
         console.log('Client connected:', socket.id);
+        // Client can join a specific chat room (one-to-one or group)
+        socket.on('join room', (roomId) => {
+            socket.join(roomId);
+            console.log(`Socket ${socket.id} joined room ${roomId}`);
+        });
+        // Client can leave a room if needed
+        socket.on('leave room', (roomId) => {
+            socket.leave(roomId);
+            console.log(`Socket ${socket.id} left room ${roomId}`);
+        });
+        // Chat message event with room id
         socket.on('chat message', (data) => __awaiter(this, void 0, void 0, function* () {
             console.log('Received chat message:', data);
             try {
-                const message = yield prisma_1.default.chat.create({
+                // Save the message to the database. Note that your Prisma client
+                // now refers to the ChatMessage model (mapped to chat_messages table)
+                const message = yield prisma_1.default.chatMessage.create({
                     data: {
                         content: data.content,
                         sender_id: data.senderId,
+                        room_id: data.roomId,
                     },
                 });
-                // Broadcast the saved message to all connected clients
-                io.emit('chat message', message);
+                // Emit the saved message to all clients in that room only
+                io.to(data.roomId).emit('chat message', message);
             }
             catch (error) {
                 console.error('Error saving chat message:', error);

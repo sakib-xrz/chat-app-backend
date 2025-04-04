@@ -1,6 +1,6 @@
 import express from 'express';
 import { AuthRoutes } from '../modules/auth/auth.routes';
-// import { UserRoutes } from '../modules/user/user.routes';
+import { ChatRoutes } from '../modules/chat/chat.routes';
 
 const router = express.Router();
 
@@ -14,10 +14,10 @@ const routes: Route[] = [
     path: '/auth',
     route: AuthRoutes,
   },
-  //   {
-  //     path: '/users',
-  //     route: UserRoutes,
-  //   },
+  {
+    path: '/chat',
+    route: ChatRoutes,
+  },
 ];
 
 routes.forEach((route) => {

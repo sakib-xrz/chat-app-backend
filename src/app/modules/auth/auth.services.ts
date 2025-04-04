@@ -1,14 +1,14 @@
 import httpStatus from 'http-status';
 import AppError from '../../errors/AppError';
 import prisma from '../../utils/prisma';
-import { LoginType, RegisterType } from './auth.interface';
 import bcrypt from 'bcrypt';
 import AuthUtils from './auth.utils';
 import config from '../../config';
 import { Gender } from '@prisma/client';
 import { JwtPayload } from 'jsonwebtoken';
+import { ILogin, IRegister } from './auth.interface';
 
-const Login = async (payload: LoginType) => {
+const Login = async (payload: ILogin) => {
   const user = await prisma.user.findFirst({
     where: { email: payload.email },
   });
@@ -46,7 +46,7 @@ const Login = async (payload: LoginType) => {
   return { accessToken, refreshToken };
 };
 
-const Register = async (payload: RegisterType) => {
+const Register = async (payload: IRegister) => {
   const isUserExists = await prisma.user.findFirst({
     where: { email: payload.email },
   });
