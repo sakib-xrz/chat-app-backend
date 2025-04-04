@@ -4,8 +4,10 @@ import sendResponse from '../../utils/sendResponse';
 import ChatService from './chat.services';
 
 const CreateRoom = catchAsync(async (req, res) => {
+  if (!req.body.participants.includes(req.user.id)) {
+    req.body.participants.unshift(req.user.id);
+  }
   const room = await ChatService.CreateRoom(req.body);
-
   sendResponse(res, {
     success: true,
     statusCode: httpStatus.CREATED,
@@ -41,7 +43,7 @@ const SendMessage = catchAsync(async (req, res) => {
 
 const GetMessagesByRoomId = catchAsync(async (req, res) => {
   const messages = await ChatService.GetMessagesByRoomId(
-    req.params.roomId,
+    req.params.room_id,
     req.user.id,
   );
 
@@ -129,7 +131,10 @@ const UpdateRoomAdmin = catchAsync(async (req, res) => {
 });
 
 const GetRoomDetails = catchAsync(async (req, res) => {
-  const room = await ChatService.GetRoomDetails(req.params.roomId, req.user.id);
+  const room = await ChatService.GetRoomDetails(
+    req.params.room_id,
+    req.user.id,
+  );
 
   sendResponse(res, {
     success: true,

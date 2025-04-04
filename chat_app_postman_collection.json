@@ -1,0 +1,914 @@
+{
+	"info": {
+		"_postman_id": "152f64d0-20e9-4e80-a99f-51b0a0470791",
+		"name": "Chat App API Collection",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "38345873"
+	},
+	"item": [
+		{
+			"name": "Auth",
+			"item": [
+				{
+					"name": "Register",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"// Check if the request was successful",
+									"pm.test(\"Registration successful\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"// Parse the response JSON",
+									"const responseJson = pm.response.json();",
+									"",
+									"// Check if the response has the expected structure",
+									"pm.test(\"Response has access token\", function () {",
+									"    pm.expect(responseJson.data).to.have.property('accessToken');",
+									"});",
+									"",
+									"// Save the access token to the collection variable",
+									"if (responseJson.data && responseJson.data.accessToken) {",
+									"    pm.collectionVariables.set('accessToken', responseJson.data.accessToken);",
+									"    console.log('Access token saved to collection variable');",
+									"}",
+									"",
+									"// Extract and save the user ID if available in the response (depends on your API)",
+									"try {",
+									"    // Attempt to parse the JWT token to extract user ID",
+									"    const jwt = responseJson.data.accessToken;",
+									"    const base64Url = jwt.split('.')[1];",
+									"    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');",
+									"    const jsonPayload = JSON.parse(atob(base64));",
+									"    ",
+									"    if (jsonPayload.userId) {",
+									"        pm.collectionVariables.set('userId', jsonPayload.userId);",
+									"        console.log('User ID saved from token: ' + jsonPayload.userId);",
+									"    } else if (jsonPayload.sub) {",
+									"        pm.collectionVariables.set('userId', jsonPayload.sub);",
+									"        console.log('User ID saved from token subject: ' + jsonPayload.sub);",
+									"    }",
+									"} catch (e) {",
+									"    console.log('Could not extract user ID from token: ' + e.message);",
+									"}",
+									"",
+									"// Save the email for future login attempts",
+									"const requestBody = JSON.parse(pm.request.body.raw);",
+									"pm.collectionVariables.set('userEmail', requestBody.email);",
+									"pm.collectionVariables.set('userPassword', requestBody.password);"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Test User\",\n    \"email\": \"test@example.com\",\n    \"password\": \"password123\",\n    \"gender\": \"MALE\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/register",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"register"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"// Check if the request was successful",
+									"pm.test(\"Login successful\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"// Parse the response JSON",
+									"const responseJson = pm.response.json();",
+									"",
+									"// Check if the response has the expected structure",
+									"pm.test(\"Response has access token\", function () {",
+									"    pm.expect(responseJson.data).to.have.property('accessToken');",
+									"});",
+									"",
+									"// Save the access token to the collection variable",
+									"if (responseJson.data && responseJson.data.accessToken) {",
+									"    pm.collectionVariables.set('accessToken', responseJson.data.accessToken);",
+									"    console.log('Access token saved to collection variable');",
+									"}",
+									"",
+									"// Extract and save the user ID if available in the response",
+									"try {",
+									"    // Attempt to parse the JWT token to extract user ID",
+									"    const jwt = responseJson.data.accessToken;",
+									"    const base64Url = jwt.split('.')[1];",
+									"    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');",
+									"    const jsonPayload = JSON.parse(atob(base64));",
+									"    ",
+									"    if (jsonPayload.userId) {",
+									"        pm.collectionVariables.set('userId', jsonPayload.userId);",
+									"        console.log('User ID saved from token: ' + jsonPayload.userId);",
+									"    } else if (jsonPayload.sub) {",
+									"        pm.collectionVariables.set('userId', jsonPayload.sub);",
+									"        console.log('User ID saved from token subject: ' + jsonPayload.sub);",
+									"    }",
+									"} catch (e) {",
+									"    console.log('Could not extract user ID from token: ' + e.message);",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"{{userEmail}}\",\n    \"password\": \"{{userPassword}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/login",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Change Password",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"// Check if the request was successful",
+									"pm.test(\"Password change successful\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"// Update the stored password if successful",
+									"if (pm.response.code === 200) {",
+									"    const requestBody = JSON.parse(pm.request.body.raw);",
+									"    pm.collectionVariables.set('userPassword', requestBody.newPassword);",
+									"    console.log('Password updated in collection variables');",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"oldPassword\": \"{{userPassword}}\",\n    \"newPassword\": \"newPassword123\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/change-password",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"change-password"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Profile",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"// Check if the request was successful",
+									"pm.test(\"Profile retrieval successful\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"// Parse the response JSON",
+									"const responseJson = pm.response.json();",
+									"",
+									"// Save user details from profile if available",
+									"if (responseJson.data && responseJson.data.id) {",
+									"    pm.collectionVariables.set('userId', responseJson.data.id);",
+									"    console.log('User ID saved from profile: ' + responseJson.data.id);",
+									"    ",
+									"    if (responseJson.data.email) {",
+									"        pm.collectionVariables.set('userEmail', responseJson.data.email);",
+									"    }",
+									"    ",
+									"    if (responseJson.data.name) {",
+									"        pm.collectionVariables.set('userName', responseJson.data.name);",
+									"    }",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/auth/profile",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"profile"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Search Users",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"// Check if the request was successful",
+									"pm.test(\"User search successful\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"// Parse the response JSON",
+									"const responseJson = pm.response.json();",
+									"",
+									"// Save the first user ID found (if any) for testing adding to rooms",
+									"if (responseJson.data && responseJson.data.length > 0) {",
+									"    // Save another user ID different from current user for adding to rooms",
+									"    const currentUserId = pm.collectionVariables.get('userId');",
+									"    const otherUser = responseJson.data.find(user => user.id !== currentUserId);",
+									"    ",
+									"    if (otherUser) {",
+									"        pm.collectionVariables.set('otherUserId', otherUser.id);",
+									"        console.log('Other user ID saved for testing: ' + otherUser.id);",
+									"    } else if (responseJson.data[0]) {",
+									"        // Fallback: just use the first user if no other found",
+									"        pm.collectionVariables.set('otherUserId', responseJson.data[0].id);",
+									"        console.log('First user ID saved for testing: ' + responseJson.data[0].id);",
+									"    }",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/auth/users?search=test",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"users"
+							],
+							"query": [
+								{
+									"key": "search",
+									"value": "test"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Chat Rooms",
+			"item": [
+				{
+					"name": "Create Room",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Check if the request was successful",
+									"pm.test(\"Room creation successful\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"// Parse the response JSON",
+									"const responseJson = pm.response.json();",
+									"",
+									"// Save the room ID for further testing",
+									"if (responseJson.data && responseJson.data.id) {",
+									"    pm.collectionVariables.set('roomId', responseJson.data.id);",
+									"    console.log('Room ID saved: ' + responseJson.data.id);",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "// {\n//     \"name\": \"Test Group\",\n//     \"type\": \"GROUP\",\n//     \"participants\": [\n//         \"ba1cd4f0-bf49-4aa1-abae-49cc0f089102\",\n//         \"df55a2e0-ce31-4e35-b926-1c3ad3acc18c\"\n//     ]\n// }\n\n// {\n//     \"type\": \"ONE_TO_ONE\",\n//     \"participants\": [\n//         \"ba1cd4f0-bf49-4aa1-abae-49cc0f089102\"\n//     ]\n// }\n\n// {\n//     \"type\": \"ONE_TO_ONE\",\n//     \"participants\": [\n//         \"df55a2e0-ce31-4e35-b926-1c3ad3acc18c\"\n//     ]\n// }"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/chat/rooms",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"chat",
+								"rooms"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get User Rooms",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"// Check if the request was successful",
+									"pm.test(\"Get user rooms successful\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"// Parse the response JSON",
+									"const responseJson = pm.response.json();",
+									"",
+									"// Save the first room ID if not already set",
+									"if (!pm.collectionVariables.get('roomId') && responseJson.data && responseJson.data.length > 0) {",
+									"    pm.collectionVariables.set('roomId', responseJson.data[0].id);",
+									"    console.log('Room ID saved from list: ' + responseJson.data[0].id);",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/chat/rooms",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"chat",
+								"rooms"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Room Details",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/chat/rooms/{{roomId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"chat",
+								"rooms",
+								"{{roomId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Add User to Room",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"room_id\": \"{{roomId}}\",\n    \"user_id\": \"df55a2e0-ce31-4e35-b926-1c3ad3acc18c\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/chat/rooms/users",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"chat",
+								"rooms",
+								"users"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Remove User from Room",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"room_id\": \"{{roomId}}\",\n    \"user_id\": \"df55a2e0-ce31-4e35-b926-1c3ad3acc18c\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/chat/rooms/users",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"chat",
+								"rooms",
+								"users"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update User Role",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"room_id\": \"{{roomId}}\",\n    \"user_id\": \"\",\n    \"role\": \"ADMIN\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/chat/rooms/users/role",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"chat",
+								"rooms",
+								"users",
+								"role"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Messages",
+			"item": [
+				{
+					"name": "Send Message",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Check if the request was successful",
+									"pm.test(\"Message sent successfully\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"// Parse the response JSON",
+									"const responseJson = pm.response.json();",
+									"",
+									"// Save the message ID for further testing",
+									"if (responseJson.data && responseJson.data.id) {",
+									"    pm.collectionVariables.set('messageId', responseJson.data.id);",
+									"    console.log('Message ID saved: ' + responseJson.data.id);",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"content\": \"Hello, this is a test message\",\n    \"sender_id\": \"{{userId}}\",\n    \"room_id\": \"{{roomId}}\",\n    \"type\": \"TEXT\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/chat/messages",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"chat",
+								"messages"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Upload File/Image",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Check if the request was successful",
+									"pm.test(\"File uploaded successfully\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"// Parse the response JSON",
+									"const responseJson = pm.response.json();",
+									"",
+									"// Save the message ID for the file message",
+									"if (responseJson.data && responseJson.data.id) {",
+									"    pm.collectionVariables.set('fileMessageId', responseJson.data.id);",
+									"    console.log('File message ID saved: ' + responseJson.data.id);",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"value": "",
+									"type": "file"
+								},
+								{
+									"key": "content",
+									"value": "Shared a file",
+									"type": "text"
+								},
+								{
+									"key": "sender_id",
+									"value": "{{userId}}",
+									"type": "text"
+								},
+								{
+									"key": "room_id",
+									"value": "{{roomId}}",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/chat/messages/file",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"chat",
+								"messages",
+								"file"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Messages by Room ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"// Check if the request was successful",
+									"pm.test(\"Get messages successful\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"// Parse the response JSON",
+									"const responseJson = pm.response.json();",
+									"",
+									"// Save the first message ID if not already set",
+									"if (!pm.collectionVariables.get('messageId') && responseJson.data && responseJson.data.length > 0) {",
+									"    pm.collectionVariables.set('messageId', responseJson.data[0].id);",
+									"    console.log('Message ID saved from list: ' + responseJson.data[0].id);",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/chat/rooms/{{roomId}}/messages",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"chat",
+								"rooms",
+								"{{roomId}}",
+								"messages"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Edit Message",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"message_id\": \"{{messageId}}\",\n    \"content\": \"Updated message content\",\n    \"sender_id\": \"{{userId}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/chat/messages",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"chat",
+								"messages"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Message",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"message_id\": \"{{messageId}}\",\n    \"sender_id\": \"{{userId}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/chat/messages",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"chat",
+								"messages"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Mark Message as Read",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"message_id\": \"{{messageId}}\",\n    \"user_id\": \"{{userId}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/chat/messages/read",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"chat",
+								"messages",
+								"read"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8000/api/v1",
+			"type": "string"
+		},
+		{
+			"key": "accessToken",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "userId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "roomId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "messageId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "userEmail",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "userPassword",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "userName",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "fileMessageId",
+			"value": "",
+			"type": "string"
+		}
+	]
+}

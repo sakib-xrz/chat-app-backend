@@ -17,6 +17,9 @@ const catchAsync_1 = __importDefault(require("../../utils/catchAsync"));
 const sendResponse_1 = __importDefault(require("../../utils/sendResponse"));
 const chat_services_1 = __importDefault(require("./chat.services"));
 const CreateRoom = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    if (!req.body.participants.includes(req.user.id)) {
+        req.body.participants.unshift(req.user.id);
+    }
     const room = yield chat_services_1.default.CreateRoom(req.body);
     (0, sendResponse_1.default)(res, {
         success: true,
@@ -44,7 +47,7 @@ const SendMessage = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, vo
     });
 }));
 const GetMessagesByRoomId = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const messages = yield chat_services_1.default.GetMessagesByRoomId(req.params.roomId, req.user.id);
+    const messages = yield chat_services_1.default.GetMessagesByRoomId(req.params.room_id, req.user.id);
     (0, sendResponse_1.default)(res, {
         success: true,
         statusCode: http_status_1.default.OK,
@@ -107,7 +110,7 @@ const UpdateRoomAdmin = (0, catchAsync_1.default)((req, res) => __awaiter(void 0
     });
 }));
 const GetRoomDetails = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const room = yield chat_services_1.default.GetRoomDetails(req.params.roomId, req.user.id);
+    const room = yield chat_services_1.default.GetRoomDetails(req.params.room_id, req.user.id);
     (0, sendResponse_1.default)(res, {
         success: true,
         statusCode: http_status_1.default.OK,

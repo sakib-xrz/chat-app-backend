@@ -17,7 +17,7 @@ router.post(
 
 router.get('/rooms', auth(), ChatController.GetRoomsByUserId);
 
-router.get('/rooms/:roomId', auth(), ChatController.GetRoomDetails);
+router.get('/rooms/:room_id', auth(), ChatController.GetRoomDetails);
 
 // Message routes
 router.post(
@@ -28,7 +28,7 @@ router.post(
 );
 
 router.get(
-  '/rooms/:roomId/messages',
+  '/rooms/:room_id/messages',
   auth(),
   ChatController.GetMessagesByRoomId,
 );

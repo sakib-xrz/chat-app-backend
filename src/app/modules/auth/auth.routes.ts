@@ -25,4 +25,8 @@ router.patch(
   AuthController.ChangePassword,
 );
 
+router.get('/profile', auth(), AuthController.GetProfile);
+
+router.get('/users', auth(), AuthController.SearchUsers);
+
 export const AuthRoutes = router;

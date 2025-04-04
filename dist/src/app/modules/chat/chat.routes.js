@@ -23,10 +23,10 @@ const router = express_1.default.Router();
 // Room routes
 router.post('/rooms', (0, auth_1.default)(), (0, validateRequest_1.default)(chat_validation_1.default.CreateRoomSchema), chat_controller_1.default.CreateRoom);
 router.get('/rooms', (0, auth_1.default)(), chat_controller_1.default.GetRoomsByUserId);
-router.get('/rooms/:roomId', (0, auth_1.default)(), chat_controller_1.default.GetRoomDetails);
+router.get('/rooms/:room_id', (0, auth_1.default)(), chat_controller_1.default.GetRoomDetails);
 // Message routes
 router.post('/messages', (0, auth_1.default)(), (0, validateRequest_1.default)(chat_validation_1.default.SendMessageSchema), chat_controller_1.default.SendMessage);
-router.get('/rooms/:roomId/messages', (0, auth_1.default)(), chat_controller_1.default.GetMessagesByRoomId);
+router.get('/rooms/:room_id/messages', (0, auth_1.default)(), chat_controller_1.default.GetMessagesByRoomId);
 router.patch('/messages', (0, auth_1.default)(), (0, validateRequest_1.default)(chat_validation_1.default.EditMessageSchema), chat_controller_1.default.EditMessage);
 router.delete('/messages', (0, auth_1.default)(), (0, validateRequest_1.default)(chat_validation_1.default.DeleteMessageSchema), chat_controller_1.default.DeleteMessage);
 router.post('/messages/read', (0, auth_1.default)(), (0, validateRequest_1.default)(chat_validation_1.default.MarkAsReadSchema), chat_controller_1.default.MarkMessageAsRead);

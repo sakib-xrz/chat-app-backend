@@ -1,4 +1,3 @@
-// socket.ts
 import { Server, Socket } from 'socket.io';
 import http from 'http';
 import prisma from './app/utils/prisma';
@@ -64,22 +63,22 @@ export function initializeSocket(server: http.Server): Server {
 
   io.on('connection', async (socket: AuthenticatedSocket) => {
     console.log('Client connected:', socket.id);
-    const userId = socket.userId;
+    const user_id = socket.userId;
 
-    if (!userId) {
+    if (!user_id) {
       socket.disconnect();
       return;
     }
 
     // Broadcast to all users that this user is online
     socket.broadcast.emit('user:status', {
-      user_id: userId,
+      user_id: user_id,
       is_online: true,
     });
 
     // Join all rooms that the user is a part of
     const userRooms = await prisma.chatRoomUser.findMany({
-      where: { user_id: userId },
+      where: { user_id: user_id },
       select: { room_id: true },
     });
 
@@ -88,15 +87,15 @@ export function initializeSocket(server: http.Server): Server {
     });
 
     // Client can join a specific chat room
-    socket.on('room:join', async (roomId: string) => {
-      socket.join(roomId);
-      console.log(`Socket ${socket.id} joined room ${roomId}`);
+    socket.on('room:join', async (room_id: string) => {
+      socket.join(room_id);
+      console.log(`Socket ${socket.id} joined room ${room_id}`);
     });
 
     // Client can leave a room if needed
-    socket.on('room:leave', (roomId: string) => {
-      socket.leave(roomId);
-      console.log(`Socket ${socket.id} left room ${roomId}`);
+    socket.on('room:leave', (room_id: string) => {
+      socket.leave(room_id);
+      console.log(`Socket ${socket.id} left room ${room_id}`);
     });
 
     // Send message event
@@ -104,15 +103,15 @@ export function initializeSocket(server: http.Server): Server {
       'message:send',
       async (data: {
         content: string;
-        senderId: string;
-        roomId: string;
+        sender_id: string;
+        room_id: string;
         type?: MessageType;
-        fileUrl?: string;
+        file_url?: string;
       }) => {
         console.log('Received chat message:', data);
         try {
           // Verify sender
-          if (data.senderId !== userId) {
+          if (data.sender_id !== user_id) {
             socket.emit('error', {
               message: 'Unauthorized: Cannot send message as another user',
             });
@@ -122,8 +121,8 @@ export function initializeSocket(server: http.Server): Server {
           // Check if the user is in the room
           const isUserInRoom = await prisma.chatRoomUser.findFirst({
             where: {
-              room_id: data.roomId,
-              user_id: userId,
+              room_id: data.room_id,
+              user_id: user_id,
             },
           });
 
@@ -138,10 +137,10 @@ export function initializeSocket(server: http.Server): Server {
           const message = await prisma.chatMessage.create({
             data: {
               content: data.content,
-              sender_id: data.senderId,
-              room_id: data.roomId,
+              sender_id: data.sender_id,
+              room_id: data.room_id,
               type: data.type || MessageType.TEXT,
-              file_url: data.fileUrl,
+              file_url: data.file_url,
             },
             include: {
               sender: {
@@ -157,7 +156,7 @@ export function initializeSocket(server: http.Server): Server {
 
           // Get room participants to create message status for each
           const roomParticipants = await prisma.chatRoomUser.findMany({
-            where: { room_id: data.roomId },
+            where: { room_id: data.room_id },
             select: { user_id: true },
           });
 
@@ -165,7 +164,7 @@ export function initializeSocket(server: http.Server): Server {
           for (const participant of roomParticipants) {
             // Mark as READ for the sender, DELIVERED for others
             const status =
-              participant.user_id === userId
+              participant.user_id === user_id
                 ? MessageStatusType.READ
                 : MessageStatusType.DELIVERED;
 
@@ -204,13 +203,13 @@ export function initializeSocket(server: http.Server): Server {
           });
 
           // Emit the saved message to all clients in that room
-          io.to(data.roomId).emit('message:received', messageWithStatus);
+          io.to(data.room_id).emit('message:received', messageWithStatus);
 
           // Send notification to all users in the room except sender
           const roomUsers = await prisma.chatRoomUser.findMany({
             where: {
-              room_id: data.roomId,
-              user_id: { not: userId },
+              room_id: data.room_id,
+              user_id: { not: user_id },
             },
             include: {
               user: {
@@ -225,23 +224,23 @@ export function initializeSocket(server: http.Server): Server {
 
           // Get room details for notification
           const room = await prisma.chatRoom.findUnique({
-            where: { id: data.roomId },
+            where: { id: data.room_id },
             select: { name: true, type: true },
           });
 
           // Sender details for notification
           const sender = await prisma.user.findUnique({
-            where: { id: userId },
+            where: { id: user_id },
             select: { name: true },
           });
 
           // Build notification data
           const notification = {
             message_id: message.id,
-            room_id: data.roomId,
+            room_id: data.room_id,
             room_name: room?.name,
             room_type: room?.type,
-            sender_id: userId,
+            sender_id: user_id,
             sender_name: sender?.name,
             content: data.content,
             type: data.type || MessageType.TEXT,
@@ -274,7 +273,7 @@ export function initializeSocket(server: http.Server): Server {
       }) => {
         try {
           // Verify sender
-          if (data.senderId !== userId) {
+          if (data.senderId !== user_id) {
             socket.emit('error', {
               message: "Unauthorized: Cannot edit another user's message",
             });
@@ -292,7 +291,7 @@ export function initializeSocket(server: http.Server): Server {
           }
 
           // Check if user is the sender
-          if (message.sender_id !== userId) {
+          if (message.sender_id !== user_id) {
             socket.emit('error', {
               message: 'Unauthorized: You can only edit your own messages',
             });
@@ -341,10 +340,10 @@ export function initializeSocket(server: http.Server): Server {
     // Delete message
     socket.on(
       'message:delete',
-      async (data: { messageId: string; senderId: string }) => {
+      async (data: { message_id: string; sender_id: string }) => {
         try {
           // Verify sender
-          if (data.senderId !== userId) {
+          if (data.sender_id !== user_id) {
             socket.emit('error', {
               message: "Unauthorized: Cannot delete another user's message",
             });
@@ -353,13 +352,13 @@ export function initializeSocket(server: http.Server): Server {
 
           // Find the message
           const message = await prisma.chatMessage.findUnique({
-            where: { id: data.messageId },
+            where: { id: data.message_id },
             include: {
               room: {
                 include: {
                   participants: {
                     where: {
-                      user_id: userId,
+                      user_id: user_id,
                       role: UserRole.ADMIN,
                     },
                   },
@@ -375,7 +374,7 @@ export function initializeSocket(server: http.Server): Server {
 
           // Check if user is the sender or an admin
           const isAdmin = message.room.participants.length > 0;
-          if (message.sender_id !== userId && !isAdmin) {
+          if (message.sender_id !== user_id && !isAdmin) {
             socket.emit('error', {
               message:
                 'Unauthorized: You can only delete your own messages or as an admin',
@@ -385,7 +384,7 @@ export function initializeSocket(server: http.Server): Server {
 
           // Soft delete the message
           const deletedMessage = await prisma.chatMessage.update({
-            where: { id: data.messageId },
+            where: { id: data.message_id },
             data: {
               content: 'This message has been deleted',
               deleted: true,
@@ -408,10 +407,10 @@ export function initializeSocket(server: http.Server): Server {
     // Mark message as read
     socket.on(
       'message:read',
-      async (data: { messageId: string; userId: string }) => {
+      async (data: { message_id: string; user_id: string }) => {
         try {
           // Verify user
-          if (data.userId !== userId) {
+          if (data.user_id !== user_id) {
             socket.emit('error', {
               message:
                 'Unauthorized: Cannot mark messages as read for another user',
@@ -421,7 +420,7 @@ export function initializeSocket(server: http.Server): Server {
 
           // Find the message
           const message = await prisma.chatMessage.findUnique({
-            where: { id: data.messageId },
+            where: { id: data.message_id },
           });
 
           if (!message) {
@@ -433,8 +432,8 @@ export function initializeSocket(server: http.Server): Server {
           const messageStatus = await prisma.messageStatus.upsert({
             where: {
               message_id_user_id: {
-                message_id: data.messageId,
-                user_id: data.userId,
+                message_id: data.message_id,
+                user_id: data.user_id,
               },
             },
             update: {
@@ -442,8 +441,8 @@ export function initializeSocket(server: http.Server): Server {
               updated_at: new Date(),
             },
             create: {
-              message_id: data.messageId,
-              user_id: data.userId,
+              message_id: data.message_id,
+              user_id: data.user_id,
               status: MessageStatusType.READ,
             },
             include: {
@@ -458,8 +457,8 @@ export function initializeSocket(server: http.Server): Server {
 
           // Notify everyone in the room about the read status
           io.to(message.room_id).emit('message:read', {
-            message_id: data.messageId,
-            user_id: data.userId,
+            message_id: data.message_id,
+            user_id: data.user_id,
             status: MessageStatusType.READ,
             user: messageStatus.user,
           });
@@ -473,10 +472,10 @@ export function initializeSocket(server: http.Server): Server {
     // Typing indicator
     socket.on(
       'typing:start',
-      async (data: { roomId: string; userId: string }) => {
+      async (data: { room_id: string; user_id: string }) => {
         try {
           // Verify user
-          if (data.userId !== userId) {
+          if (data.user_id !== user_id) {
             socket.emit('error', {
               message:
                 'Unauthorized: Cannot set typing status for another user',
@@ -488,8 +487,8 @@ export function initializeSocket(server: http.Server): Server {
           await prisma.typingStatus.upsert({
             where: {
               room_id_user_id: {
-                room_id: data.roomId,
-                user_id: data.userId,
+                room_id: data.room_id,
+                user_id: data.user_id,
               },
             },
             update: {
@@ -497,15 +496,15 @@ export function initializeSocket(server: http.Server): Server {
               updated_at: new Date(),
             },
             create: {
-              room_id: data.roomId,
-              user_id: data.userId,
+              room_id: data.room_id,
+              user_id: data.user_id,
               is_typing: true,
             },
           });
 
           // Get user info for the typing indicator
           const user = await prisma.user.findUnique({
-            where: { id: data.userId },
+            where: { id: data.user_id },
             select: {
               id: true,
               name: true,
@@ -514,8 +513,8 @@ export function initializeSocket(server: http.Server): Server {
           });
 
           // Broadcast to room that user is typing
-          socket.to(data.roomId).emit('typing:update', {
-            room_id: data.roomId,
+          socket.to(data.room_id).emit('typing:update', {
+            room_id: data.room_id,
             user,
             is_typing: true,
           });
@@ -528,10 +527,10 @@ export function initializeSocket(server: http.Server): Server {
     // Typing stopped
     socket.on(
       'typing:stop',
-      async (data: { roomId: string; userId: string }) => {
+      async (data: { room_id: string; user_id: string }) => {
         try {
           // Verify user
-          if (data.userId !== userId) {
+          if (data.user_id !== user_id) {
             socket.emit('error', {
               message:
                 'Unauthorized: Cannot set typing status for another user',
@@ -543,8 +542,8 @@ export function initializeSocket(server: http.Server): Server {
           await prisma.typingStatus.upsert({
             where: {
               room_id_user_id: {
-                room_id: data.roomId,
-                user_id: data.userId,
+                room_id: data.room_id,
+                user_id: data.user_id,
               },
             },
             update: {
@@ -552,15 +551,15 @@ export function initializeSocket(server: http.Server): Server {
               updated_at: new Date(),
             },
             create: {
-              room_id: data.roomId,
-              user_id: data.userId,
+              room_id: data.room_id,
+              user_id: data.user_id,
               is_typing: false,
             },
           });
 
           // Get user info for the typing indicator
           const user = await prisma.user.findUnique({
-            where: { id: data.userId },
+            where: { id: data.user_id },
             select: {
               id: true,
               name: true,
@@ -569,8 +568,8 @@ export function initializeSocket(server: http.Server): Server {
           });
 
           // Broadcast to room that user stopped typing
-          socket.to(data.roomId).emit('typing:update', {
-            room_id: data.roomId,
+          socket.to(data.room_id).emit('typing:update', {
+            room_id: data.room_id,
             user,
             is_typing: false,
           });
@@ -584,17 +583,17 @@ export function initializeSocket(server: http.Server): Server {
     socket.on(
       'group:addUser',
       async (data: {
-        roomId: string;
-        userId: string;
-        targetUserId: string;
+        room_id: string;
+        user_id: string;
+        target_user_id: string;
         role?: UserRole;
       }) => {
         try {
           // Verify user is admin
           const userInRoom = await prisma.chatRoomUser.findFirst({
             where: {
-              room_id: data.roomId,
-              user_id: userId,
+              room_id: data.room_id,
+              user_id: user_id,
               role: UserRole.ADMIN,
             },
           });
@@ -608,7 +607,7 @@ export function initializeSocket(server: http.Server): Server {
 
           // Check if room is a group
           const room = await prisma.chatRoom.findUnique({
-            where: { id: data.roomId },
+            where: { id: data.room_id },
           });
 
           if (!room || room.type !== 'GROUP') {
@@ -621,8 +620,8 @@ export function initializeSocket(server: http.Server): Server {
           // Add user to group
           const newRoomUser = await prisma.chatRoomUser.create({
             data: {
-              room_id: data.roomId,
-              user_id: data.targetUserId,
+              room_id: data.room_id,
+              user_id: data.target_user_id,
               role: data.role || UserRole.MEMBER,
             },
             include: {
@@ -640,9 +639,9 @@ export function initializeSocket(server: http.Server): Server {
           });
 
           // Notify all room members about the new user
-          io.to(data.roomId).emit('group:userAdded', {
-            room_id: data.roomId,
-            added_by: userId,
+          io.to(data.room_id).emit('group:userAdded', {
+            room_id: data.room_id,
+            added_by: user_id,
             user: newRoomUser.user,
             role: newRoomUser.role,
           });
@@ -653,7 +652,7 @@ export function initializeSocket(server: http.Server): Server {
               newRoomUser.user.socket_id,
             );
             if (userSocket) {
-              userSocket.join(data.roomId);
+              userSocket.join(data.room_id);
             }
           }
         } catch (error) {
@@ -667,21 +666,21 @@ export function initializeSocket(server: http.Server): Server {
     socket.on(
       'group:removeUser',
       async (data: {
-        roomId: string;
-        userId: string;
-        targetUserId: string;
+        room_id: string;
+        user_id: string;
+        target_user_id: string;
       }) => {
         try {
           // Check if the current user is an admin or is removing themselves
           const isAdmin = await prisma.chatRoomUser.findFirst({
             where: {
-              room_id: data.roomId,
-              user_id: userId,
+              room_id: data.room_id,
+              user_id: user_id,
               role: UserRole.ADMIN,
             },
           });
 
-          const isSelfRemoval = userId === data.targetUserId;
+          const isSelfRemoval = user_id === data.target_user_id;
 
           if (!isAdmin && !isSelfRemoval) {
             socket.emit('error', {
@@ -692,7 +691,7 @@ export function initializeSocket(server: http.Server): Server {
 
           // Check if room is a group
           const room = await prisma.chatRoom.findUnique({
-            where: { id: data.roomId },
+            where: { id: data.room_id },
           });
 
           if (!room || room.type !== 'GROUP') {
@@ -704,7 +703,7 @@ export function initializeSocket(server: http.Server): Server {
 
           // Get user info before removing
           const targetUser = await prisma.user.findUnique({
-            where: { id: data.targetUserId },
+            where: { id: data.target_user_id },
             select: {
               id: true,
               name: true,
@@ -717,15 +716,15 @@ export function initializeSocket(server: http.Server): Server {
           // Remove user from group
           await prisma.chatRoomUser.deleteMany({
             where: {
-              room_id: data.roomId,
-              user_id: data.targetUserId,
+              room_id: data.room_id,
+              user_id: data.target_user_id,
             },
           });
 
           // Notify all room members about the removal
-          io.to(data.roomId).emit('group:userRemoved', {
-            room_id: data.roomId,
-            removed_by: userId,
+          io.to(data.room_id).emit('group:userRemoved', {
+            room_id: data.room_id,
+            removed_by: user_id,
             user: targetUser,
           });
 
@@ -733,7 +732,7 @@ export function initializeSocket(server: http.Server): Server {
           if (targetUser?.socket_id) {
             const userSocket = io.sockets.sockets.get(targetUser.socket_id);
             if (userSocket) {
-              userSocket.leave(data.roomId);
+              userSocket.leave(data.room_id);
             }
           }
         } catch (error) {
@@ -747,17 +746,17 @@ export function initializeSocket(server: http.Server): Server {
     socket.on(
       'group:updateRole',
       async (data: {
-        roomId: string;
-        userId: string;
-        targetUserId: string;
+        room_id: string;
+        user_id: string;
+        target_user_id: string;
         role: UserRole;
       }) => {
         try {
           // Verify user is admin
           const userInRoom = await prisma.chatRoomUser.findFirst({
             where: {
-              room_id: data.roomId,
-              user_id: userId,
+              room_id: data.room_id,
+              user_id: user_id,
               role: UserRole.ADMIN,
             },
           });
@@ -771,7 +770,7 @@ export function initializeSocket(server: http.Server): Server {
 
           // Check if room is a group
           const room = await prisma.chatRoom.findUnique({
-            where: { id: data.roomId },
+            where: { id: data.room_id },
           });
 
           if (!room || room.type !== 'GROUP') {
@@ -785,8 +784,8 @@ export function initializeSocket(server: http.Server): Server {
           const updatedRoomUser = await prisma.chatRoomUser.update({
             where: {
               room_id_user_id: {
-                room_id: data.roomId,
-                user_id: data.targetUserId,
+                room_id: data.room_id,
+                user_id: data.target_user_id,
               },
             },
             data: {
@@ -805,9 +804,9 @@ export function initializeSocket(server: http.Server): Server {
           });
 
           // Notify all room members about the role update
-          io.to(data.roomId).emit('group:roleUpdated', {
-            room_id: data.roomId,
-            updated_by: userId,
+          io.to(data.room_id).emit('group:roleUpdated', {
+            room_id: data.room_id,
+            updated_by: user_id,
             user: updatedRoomUser.user,
             role: updatedRoomUser.role,
           });
@@ -822,10 +821,10 @@ export function initializeSocket(server: http.Server): Server {
     socket.on('disconnect', async () => {
       console.log('Client disconnected:', socket.id);
 
-      if (userId) {
+      if (user_id) {
         // Update user's online status and last seen
         await prisma.user.update({
-          where: { id: userId },
+          where: { id: user_id },
           data: {
             is_online: false,
             last_seen: new Date(),
@@ -835,13 +834,13 @@ export function initializeSocket(server: http.Server): Server {
 
         // Clear typing indicators
         await prisma.typingStatus.updateMany({
-          where: { user_id: userId },
+          where: { user_id: user_id },
           data: { is_typing: false },
         });
 
         // Broadcast to all users that this user is offline
         io.emit('user:status', {
-          user_id: userId,
+          user_id: user_id,
           is_online: false,
           last_seen: new Date(),
         });

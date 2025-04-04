@@ -78,7 +78,7 @@ const CreateRoom = async (payload: ICreateRoom) => {
       participants: {
         create: payload.participants.map((participant, index) => ({
           user_id: participant,
-          // Make the first participant an admin for group chats
+          // Need to make the creator of the group an admin
           role:
             payload.type === 'GROUP' && index === 0
               ? UserRole.ADMIN
@@ -107,12 +107,12 @@ const CreateRoom = async (payload: ICreateRoom) => {
   return result;
 };
 
-const GetRoomsByUserId = async (userId: string) => {
+const GetRoomsByUserId = async (user_id: string) => {
   const result = await prisma.chatRoom.findMany({
     where: {
       participants: {
         some: {
-          user_id: userId,
+          user_id: user_id,
         },
       },
     },
@@ -143,7 +143,7 @@ const GetRoomsByUserId = async (userId: string) => {
           },
           read_by: {
             where: {
-              user_id: userId,
+              user_id: user_id,
             },
           },
         },
@@ -241,12 +241,12 @@ const SendMessage = async (payload: ISendMessage) => {
   return result;
 };
 
-const GetMessagesByRoomId = async (roomId: string, userId: string) => {
+const GetMessagesByRoomId = async (room_id: string, user_id: string) => {
   // Check if user is in room
   const userInRoom = await prisma.chatRoomUser.findFirst({
     where: {
-      room_id: roomId,
-      user_id: userId,
+      room_id: room_id,
+      user_id: user_id,
     },
   });
 
@@ -259,7 +259,7 @@ const GetMessagesByRoomId = async (roomId: string, userId: string) => {
 
   const result = await prisma.chatMessage.findMany({
     where: {
-      room_id: roomId,
+      room_id: room_id,
     },
     include: {
       sender: {
@@ -290,7 +290,7 @@ const GetMessagesByRoomId = async (roomId: string, userId: string) => {
       (message) =>
         !message.read_by.some(
           (status) =>
-            status.user_id === userId &&
+            status.user_id === user_id &&
             status.status === MessageStatusType.READ,
         ),
     )
@@ -302,7 +302,7 @@ const GetMessagesByRoomId = async (roomId: string, userId: string) => {
         where: {
           message_id_user_id: {
             message_id: messageId,
-            user_id: userId,
+            user_id: user_id,
           },
         },
         update: {
@@ -311,7 +311,7 @@ const GetMessagesByRoomId = async (roomId: string, userId: string) => {
         },
         create: {
           message_id: messageId,
-          user_id: userId,
+          user_id: user_id,
           status: MessageStatusType.READ,
         },
       });
@@ -484,7 +484,7 @@ const MarkMessageAsRead = async (payload: IMarkMessageAsRead) => {
 
 const AddUserToRoom = async (
   payload: IAddUserToRoom,
-  currentUserId: string,
+  current_user_id: string,
 ) => {
   // Get the room
   const room = await prisma.chatRoom.findUnique({
@@ -507,7 +507,7 @@ const AddUserToRoom = async (
   const currentUserInRoom = await prisma.chatRoomUser.findFirst({
     where: {
       room_id: payload.room_id,
-      user_id: currentUserId,
+      user_id: current_user_id,
       role: UserRole.ADMIN,
     },
   });
@@ -539,7 +539,7 @@ const AddUserToRoom = async (
     data: {
       room_id: payload.room_id,
       user_id: payload.user_id,
-      role: payload.role || UserRole.MEMBER,
+      role: UserRole.MEMBER,
     },
     include: {
       user: {
@@ -561,7 +561,7 @@ const AddUserToRoom = async (
 
 const RemoveUserFromRoom = async (
   payload: IRemoveUserFromRoom,
-  currentUserId: string,
+  current_user_id: string,
 ) => {
   // Get the room
   const room = await prisma.chatRoom.findUnique({
@@ -581,13 +581,13 @@ const RemoveUserFromRoom = async (
   }
 
   // Check if the current user is an admin or is removing themselves
-  const isSelfRemoval = currentUserId === payload.user_id;
+  const isSelfRemoval = current_user_id === payload.user_id;
 
   if (!isSelfRemoval) {
     const currentUserInRoom = await prisma.chatRoomUser.findFirst({
       where: {
         room_id: payload.room_id,
-        user_id: currentUserId,
+        user_id: current_user_id,
         role: UserRole.ADMIN,
       },
     });
@@ -638,13 +638,13 @@ const RemoveUserFromRoom = async (
   return {
     room_id: payload.room_id,
     user: userInRoom.user,
-    removed_by: currentUserId,
+    removed_by: current_user_id,
   };
 };
 
 const UpdateRoomAdmin = async (
   payload: IUpdateRoomAdmin,
-  currentUserId: string,
+  current_user_id: string,
 ) => {
   // Get the room
   const room = await prisma.chatRoom.findUnique({
@@ -667,7 +667,7 @@ const UpdateRoomAdmin = async (
   const currentUserInRoom = await prisma.chatRoomUser.findFirst({
     where: {
       room_id: payload.room_id,
-      user_id: currentUserId,
+      user_id: current_user_id,
       role: UserRole.ADMIN,
     },
   });
@@ -721,12 +721,12 @@ const UpdateRoomAdmin = async (
   return result;
 };
 
-const GetRoomDetails = async (roomId: string, userId: string) => {
+const GetRoomDetails = async (room_id: string, user_id: string) => {
   // Check if user is in room
   const userInRoom = await prisma.chatRoomUser.findFirst({
     where: {
-      room_id: roomId,
-      user_id: userId,
+      room_id: room_id,
+      user_id: user_id,
     },
   });
 
@@ -738,7 +738,7 @@ const GetRoomDetails = async (roomId: string, userId: string) => {
   }
 
   const result = await prisma.chatRoom.findUnique({
-    where: { id: roomId },
+    where: { id: room_id },
     include: {
       participants: {
         include: {

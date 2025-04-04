@@ -83,5 +83,46 @@ const ChangePassword = (payload, user) => __awaiter(void 0, void 0, void 0, func
         data: { password: hashedPassword },
     });
 });
-const AuthService = { Login, Register, ChangePassword };
+const GetProfile = (user) => __awaiter(void 0, void 0, void 0, function* () {
+    const userData = yield prisma_1.default.user.findFirst({
+        where: { id: user.id },
+        select: {
+            id: true,
+            name: true,
+            email: true,
+            image: true,
+            gender: true,
+            phone: true,
+            created_at: true,
+            updated_at: true,
+        },
+    });
+    return userData;
+});
+const SearchUsers = (searchQuery) => __awaiter(void 0, void 0, void 0, function* () {
+    const users = yield prisma_1.default.user.findMany({
+        where: {
+            OR: [
+                { name: { contains: searchQuery, mode: 'insensitive' } },
+                { email: { contains: searchQuery, mode: 'insensitive' } },
+            ],
+        },
+        select: {
+            id: true,
+            name: true,
+            email: true,
+            image: true,
+            is_online: true,
+            last_seen: true,
+        },
+    });
+    return users;
+});
+const AuthService = {
+    Login,
+    Register,
+    ChangePassword,
+    GetProfile,
+    SearchUsers,
+};
 exports.default = AuthService;

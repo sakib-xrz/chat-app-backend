@@ -79,7 +79,7 @@ const CreateRoom = (payload) => __awaiter(void 0, void 0, void 0, function* () {
             participants: {
                 create: payload.participants.map((participant, index) => ({
                     user_id: participant,
-                    // Make the first participant an admin for group chats
+                    // Need to make the creator of the group an admin
                     role: payload.type === 'GROUP' && index === 0
                         ? client_1.UserRole.ADMIN
                         : client_1.UserRole.MEMBER,
@@ -105,12 +105,12 @@ const CreateRoom = (payload) => __awaiter(void 0, void 0, void 0, function* () {
     });
     return result;
 });
-const GetRoomsByUserId = (userId) => __awaiter(void 0, void 0, void 0, function* () {
+const GetRoomsByUserId = (user_id) => __awaiter(void 0, void 0, void 0, function* () {
     const result = yield prisma_1.default.chatRoom.findMany({
         where: {
             participants: {
                 some: {
-                    user_id: userId,
+                    user_id: user_id,
                 },
             },
         },
@@ -141,7 +141,7 @@ const GetRoomsByUserId = (userId) => __awaiter(void 0, void 0, void 0, function*
                     },
                     read_by: {
                         where: {
-                            user_id: userId,
+                            user_id: user_id,
                         },
                     },
                 },
@@ -224,12 +224,12 @@ const SendMessage = (payload) => __awaiter(void 0, void 0, void 0, function* () 
     });
     return result;
 });
-const GetMessagesByRoomId = (roomId, userId) => __awaiter(void 0, void 0, void 0, function* () {
+const GetMessagesByRoomId = (room_id, user_id) => __awaiter(void 0, void 0, void 0, function* () {
     // Check if user is in room
     const userInRoom = yield prisma_1.default.chatRoomUser.findFirst({
         where: {
-            room_id: roomId,
-            user_id: userId,
+            room_id: room_id,
+            user_id: user_id,
         },
     });
     if (!userInRoom) {
@@ -237,7 +237,7 @@ const GetMessagesByRoomId = (roomId, userId) => __awaiter(void 0, void 0, void 0
     }
     const result = yield prisma_1.default.chatMessage.findMany({
         where: {
-            room_id: roomId,
+            room_id: room_id,
         },
         include: {
             sender: {
@@ -263,7 +263,7 @@ const GetMessagesByRoomId = (roomId, userId) => __awaiter(void 0, void 0, void 0
     });
     // Mark all unread messages as read
     const messageIds = result
-        .filter((message) => !message.read_by.some((status) => status.user_id === userId &&
+        .filter((message) => !message.read_by.some((status) => status.user_id === user_id &&
         status.status === client_1.MessageStatusType.READ))
         .map((message) => message.id);
     if (messageIds.length > 0) {
@@ -272,7 +272,7 @@ const GetMessagesByRoomId = (roomId, userId) => __awaiter(void 0, void 0, void 0
                 where: {
                     message_id_user_id: {
                         message_id: messageId,
-                        user_id: userId,
+                        user_id: user_id,
                     },
                 },
                 update: {
@@ -281,7 +281,7 @@ const GetMessagesByRoomId = (roomId, userId) => __awaiter(void 0, void 0, void 0
                 },
                 create: {
                     message_id: messageId,
-                    user_id: userId,
+                    user_id: user_id,
                     status: client_1.MessageStatusType.READ,
                 },
             });
@@ -425,7 +425,7 @@ const MarkMessageAsRead = (payload) => __awaiter(void 0, void 0, void 0, functio
     });
     return result;
 });
-const AddUserToRoom = (payload, currentUserId) => __awaiter(void 0, void 0, void 0, function* () {
+const AddUserToRoom = (payload, current_user_id) => __awaiter(void 0, void 0, void 0, function* () {
     // Get the room
     const room = yield prisma_1.default.chatRoom.findUnique({
         where: { id: payload.room_id },
@@ -441,7 +441,7 @@ const AddUserToRoom = (payload, currentUserId) => __awaiter(void 0, void 0, void
     const currentUserInRoom = yield prisma_1.default.chatRoomUser.findFirst({
         where: {
             room_id: payload.room_id,
-            user_id: currentUserId,
+            user_id: current_user_id,
             role: client_1.UserRole.ADMIN,
         },
     });
@@ -463,7 +463,7 @@ const AddUserToRoom = (payload, currentUserId) => __awaiter(void 0, void 0, void
         data: {
             room_id: payload.room_id,
             user_id: payload.user_id,
-            role: payload.role || client_1.UserRole.MEMBER,
+            role: client_1.UserRole.MEMBER,
         },
         include: {
             user: {
@@ -481,7 +481,7 @@ const AddUserToRoom = (payload, currentUserId) => __awaiter(void 0, void 0, void
     });
     return result;
 });
-const RemoveUserFromRoom = (payload, currentUserId) => __awaiter(void 0, void 0, void 0, function* () {
+const RemoveUserFromRoom = (payload, current_user_id) => __awaiter(void 0, void 0, void 0, function* () {
     // Get the room
     const room = yield prisma_1.default.chatRoom.findUnique({
         where: { id: payload.room_id },
@@ -494,12 +494,12 @@ const RemoveUserFromRoom = (payload, currentUserId) => __awaiter(void 0, void 0,
         throw new AppError_1.default(http_status_1.default.BAD_REQUEST, 'Users can only be removed from group chats');
     }
     // Check if the current user is an admin or is removing themselves
-    const isSelfRemoval = currentUserId === payload.user_id;
+    const isSelfRemoval = current_user_id === payload.user_id;
     if (!isSelfRemoval) {
         const currentUserInRoom = yield prisma_1.default.chatRoomUser.findFirst({
             where: {
                 room_id: payload.room_id,
-                user_id: currentUserId,
+                user_id: current_user_id,
                 role: client_1.UserRole.ADMIN,
             },
         });
@@ -539,10 +539,10 @@ const RemoveUserFromRoom = (payload, currentUserId) => __awaiter(void 0, void 0,
     return {
         room_id: payload.room_id,
         user: userInRoom.user,
-        removed_by: currentUserId,
+        removed_by: current_user_id,
     };
 });
-const UpdateRoomAdmin = (payload, currentUserId) => __awaiter(void 0, void 0, void 0, function* () {
+const UpdateRoomAdmin = (payload, current_user_id) => __awaiter(void 0, void 0, void 0, function* () {
     // Get the room
     const room = yield prisma_1.default.chatRoom.findUnique({
         where: { id: payload.room_id },
@@ -558,7 +558,7 @@ const UpdateRoomAdmin = (payload, currentUserId) => __awaiter(void 0, void 0, vo
     const currentUserInRoom = yield prisma_1.default.chatRoomUser.findFirst({
         where: {
             room_id: payload.room_id,
-            user_id: currentUserId,
+            user_id: current_user_id,
             role: client_1.UserRole.ADMIN,
         },
     });
@@ -600,19 +600,19 @@ const UpdateRoomAdmin = (payload, currentUserId) => __awaiter(void 0, void 0, vo
     });
     return result;
 });
-const GetRoomDetails = (roomId, userId) => __awaiter(void 0, void 0, void 0, function* () {
+const GetRoomDetails = (room_id, user_id) => __awaiter(void 0, void 0, void 0, function* () {
     // Check if user is in room
     const userInRoom = yield prisma_1.default.chatRoomUser.findFirst({
         where: {
-            room_id: roomId,
-            user_id: userId,
+            room_id: room_id,
+            user_id: user_id,
         },
     });
     if (!userInRoom) {
         throw new AppError_1.default(http_status_1.default.FORBIDDEN, 'You are not a member of this chat room');
     }
     const result = yield prisma_1.default.chatRoom.findUnique({
-        where: { id: roomId },
+        where: { id: room_id },
         include: {
             participants: {
                 include: {

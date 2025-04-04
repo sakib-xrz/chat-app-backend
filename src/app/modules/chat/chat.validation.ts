@@ -2,52 +2,67 @@ import { z } from 'zod';
 import { MessageType, UserRole } from '@prisma/client';
 
 const CreateRoomSchema = z.object({
-  name: z.string().optional(),
-  type: z.enum(['ONE_TO_ONE', 'GROUP']),
-  participants: z
-    .array(z.string())
-    .min(1, 'At least one participant is required'),
+  body: z.object({
+    name: z.string().optional(),
+    type: z.enum(['ONE_TO_ONE', 'GROUP']),
+    participants: z
+      .array(z.string())
+      .min(1, 'At least one participant is required'),
+  }),
 });
 
 const SendMessageSchema = z.object({
-  content: z.string().min(1, 'Message content is required'),
-  senderId: z.string(),
-  roomId: z.string(),
-  type: z.nativeEnum(MessageType).optional(),
-  fileUrl: z.string().optional(),
+  body: z.object({
+    content: z.string().min(1, 'Message content is required'),
+    sender_id: z.string(),
+    room_id: z.string(),
+    type: z.nativeEnum(MessageType).optional(),
+    fileUrl: z.string().optional(),
+  }),
 });
 
 const EditMessageSchema = z.object({
-  messageId: z.string(),
-  content: z.string().min(1, 'Message content is required'),
-  senderId: z.string(),
+  body: z.object({
+    message_id: z.string(),
+    content: z.string().min(1, 'Message content is required'),
+    sender_id: z.string(),
+  }),
 });
 
 const DeleteMessageSchema = z.object({
-  messageId: z.string(),
-  senderId: z.string(),
+  body: z.object({
+    message_id: z.string(),
+    sender_id: z.string(),
+  }),
 });
 
 const MarkAsReadSchema = z.object({
-  messageId: z.string(),
-  userId: z.string(),
+  body: z.object({
+    message_id: z.string(),
+    user_id: z.string(),
+  }),
 });
 
 const AddUserToRoomSchema = z.object({
-  roomId: z.string(),
-  userId: z.string(),
-  role: z.nativeEnum(UserRole).optional(),
+  body: z.object({
+    room_id: z.string(),
+    user_id: z.string(),
+  }),
 });
 
 const RemoveUserFromRoomSchema = z.object({
-  roomId: z.string(),
-  userId: z.string(),
+  body: z.object({
+    room_id: z.string(),
+    user_id: z.string(),
+  }),
 });
 
 const UpdateRoleSchema = z.object({
-  roomId: z.string(),
-  userId: z.string(),
-  role: z.nativeEnum(UserRole),
+  body: z.object({
+    room_id: z.string(),
+    user_id: z.string(),
+    role: z.nativeEnum(UserRole),
+  }),
 });
 
 const ChatValidation = {

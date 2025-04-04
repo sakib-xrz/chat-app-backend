@@ -129,6 +129,51 @@ const ChangePassword = async (
   });
 };
 
-const AuthService = { Login, Register, ChangePassword };
+const GetProfile = async (user: JwtPayload) => {
+  const userData = await prisma.user.findFirst({
+    where: { id: user.id },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      image: true,
+      gender: true,
+      phone: true,
+      created_at: true,
+      updated_at: true,
+    },
+  });
+
+  return userData;
+};
+
+const SearchUsers = async (searchQuery: string) => {
+  const users = await prisma.user.findMany({
+    where: {
+      OR: [
+        { name: { contains: searchQuery, mode: 'insensitive' } },
+        { email: { contains: searchQuery, mode: 'insensitive' } },
+      ],
+    },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      image: true,
+      is_online: true,
+      last_seen: true,
+    },
+  });
+
+  return users;
+};
+
+const AuthService = {
+  Login,
+  Register,
+  ChangePassword,
+  GetProfile,
+  SearchUsers,
+};
 
 export default AuthService;

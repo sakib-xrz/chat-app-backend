@@ -13,4 +13,6 @@ const router = express_1.default.Router();
 router.post('/login', (0, validateRequest_1.default)(auth_validation_1.default.LoginSchema), auth_controller_1.default.Login);
 router.post('/register', (0, validateRequest_1.default)(auth_validation_1.default.RegisterSchema), auth_controller_1.default.Register);
 router.patch('/change-password', (0, auth_1.default)(), (0, validateRequest_1.default)(auth_validation_1.default.ChangePasswordSchema), auth_controller_1.default.ChangePassword);
+router.get('/profile', (0, auth_1.default)(), auth_controller_1.default.GetProfile);
+router.get('/users', (0, auth_1.default)(), auth_controller_1.default.SearchUsers);
 exports.AuthRoutes = router;
