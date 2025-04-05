@@ -6,15 +6,15 @@ import config from './app/config';
 import { MessageStatusType, MessageType, UserRole } from '@prisma/client';
 
 interface AuthenticatedSocket extends Socket {
-  userId?: string;
-  userEmail?: string;
+  user_id?: string;
+  user_email?: string;
 }
 
 export function initializeSocket(server: http.Server): Server {
   const io = new Server(server, {
     cors: {
       origin: '*', // adjust this for production
-      methods: ['GET', 'POST'],
+      methods: ['GET', 'POST', 'PATCH', 'DELETE'],
     },
   });
 
@@ -41,8 +41,8 @@ export function initializeSocket(server: http.Server): Server {
       }
 
       // Attach user data to socket
-      socket.userId = user.id;
-      socket.userEmail = user.email;
+      socket.user_id = user.id;
+      socket.user_email = user.email;
 
       // Update user's online status and socket_id
       await prisma.user.update({
@@ -63,7 +63,7 @@ export function initializeSocket(server: http.Server): Server {
 
   io.on('connection', async (socket: AuthenticatedSocket) => {
     console.log('Client connected:', socket.id);
-    const user_id = socket.userId;
+    const user_id = socket.user_id;
 
     if (!user_id) {
       socket.disconnect();
