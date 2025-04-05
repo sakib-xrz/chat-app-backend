@@ -3,13 +3,13 @@ import config from './app/config';
 import http from 'http';
 import { initializeSocket } from './socket';
 
-process.on('uncaughtException', (error) => {
-  console.log(
-    'Uncaught Exception! Shutting down the server due to uncaught exception...',
-    error,
-  );
-  process.exit(1);
-});
+// process.on('uncaughtException', (error) => {
+//   console.log(
+//     'Uncaught Exception! Shutting down the server due to uncaught exception...',
+//     error,
+//   );
+//   process.exit(1);
+// });
 
 const server = http.createServer(app);
 
@@ -39,11 +39,11 @@ async function startServer() {
 
 startServer();
 
-process.on('SIGTERM', () => {
-  console.log('SIGTERM received. Shutting down gracefully...');
-  if (server) {
-    server.close(() => {
-      console.log('Server closed');
-    });
-  }
-});
+// process.on('SIGTERM', () => {
+//   console.log('SIGTERM received. Shutting down gracefully...');
+//   if (server) {
+//     server.close(() => {
+//       console.log('Server closed');
+//     });
+//   }
+// });
