@@ -21,16 +21,12 @@ const auth_1 = __importDefault(require("../../middlewares/auth"));
 const handelFile_1 = require("../../utils/handelFile");
 const router = express_1.default.Router();
 // Room routes
-router.post('/rooms', (0, auth_1.default)(), (0, validateRequest_1.default)(chat_validation_1.default.CreateRoomSchema), chat_controller_1.default.CreateRoom);
-router.get('/rooms', (0, auth_1.default)(), chat_controller_1.default.GetRoomsByUserId);
-router.get('/rooms/:room_id', (0, auth_1.default)(), chat_controller_1.default.GetRoomDetails);
+router.post('/thread', (0, auth_1.default)(), (0, validateRequest_1.default)(chat_validation_1.default.CreateThreadSchema), chat_controller_1.default.CreateThread);
+router.get('/threads', (0, auth_1.default)(), chat_controller_1.default.GetThreadsByUserId);
+router.get('/thread/:thread_id', (0, auth_1.default)(), chat_controller_1.default.GetThreadDetails);
 // Message routes
 router.post('/messages', (0, auth_1.default)(), (0, validateRequest_1.default)(chat_validation_1.default.SendMessageSchema), chat_controller_1.default.SendMessage);
-router.get('/rooms/:room_id/messages', (0, auth_1.default)(), chat_controller_1.default.GetMessagesByRoomId);
-router.patch('/messages', (0, auth_1.default)(), (0, validateRequest_1.default)(chat_validation_1.default.EditMessageSchema), chat_controller_1.default.EditMessage);
-router.delete('/messages', (0, auth_1.default)(), (0, validateRequest_1.default)(chat_validation_1.default.DeleteMessageSchema), chat_controller_1.default.DeleteMessage);
-router.post('/messages/read', (0, auth_1.default)(), (0, validateRequest_1.default)(chat_validation_1.default.MarkAsReadSchema), chat_controller_1.default.MarkMessageAsRead);
-// File upload route with Cloudinary integration
+router.get('/rooms/:thread_id/messages', (0, auth_1.default)(), chat_controller_1.default.GetMessagesByThreadId);
 router.post('/messages/file', (0, auth_1.default)(), handelFile_1.upload.single('file'), (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         if (req.file) {
@@ -50,8 +46,4 @@ router.post('/messages/file', (0, auth_1.default)(), handelFile_1.upload.single(
         next(error);
     }
 }), (0, validateRequest_1.default)(chat_validation_1.default.SendMessageSchema), chat_controller_1.default.SendMessage);
-// Group management routes
-router.post('/rooms/users', (0, auth_1.default)(), (0, validateRequest_1.default)(chat_validation_1.default.AddUserToRoomSchema), chat_controller_1.default.AddUserToRoom);
-router.delete('/rooms/users', (0, auth_1.default)(), (0, validateRequest_1.default)(chat_validation_1.default.RemoveUserFromRoomSchema), chat_controller_1.default.RemoveUserFromRoom);
-router.patch('/rooms/users/role', (0, auth_1.default)(), (0, validateRequest_1.default)(chat_validation_1.default.UpdateRoleSchema), chat_controller_1.default.UpdateRoomAdmin);
 exports.ChatRoutes = router;

@@ -21,7 +21,7 @@ model User {
   phone          String?
   image          String?
   is_online      Boolean      @default(false)
-  last_seen      DateTime?
+  last_seen      DateTime     @default(now())
   socket_id      String?
   created_at     DateTime     @default(now())
   updated_at     DateTime     @updatedAt
@@ -33,7 +33,6 @@ model User {
 
 model Thread {
   id           String       @id @default(uuid())
-  name         String?
   created_at   DateTime     @default(now())
   updated_at   DateTime     @updatedAt
   messages     Message[]
@@ -48,8 +47,6 @@ model Message {
   sender_id  String
   thread_id  String
   file_url   String?
-  edited     Boolean  @default(false)
-  deleted    Boolean  @default(false)
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 

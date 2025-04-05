@@ -9,15 +9,15 @@ const router = express.Router();
 
 // Room routes
 router.post(
-  '/rooms',
+  '/thread',
   auth(),
-  validateRequest(ChatValidation.CreateRoomSchema),
-  ChatController.CreateRoom,
+  validateRequest(ChatValidation.CreateThreadSchema),
+  ChatController.CreateThread,
 );
 
-router.get('/rooms', auth(), ChatController.GetRoomsByUserId);
+router.get('/threads', auth(), ChatController.GetThreadsByUserId);
 
-router.get('/rooms/:room_id', auth(), ChatController.GetRoomDetails);
+router.get('/thread/:thread_id', auth(), ChatController.GetThreadDetails);
 
 // Message routes
 router.post(
@@ -28,33 +28,11 @@ router.post(
 );
 
 router.get(
-  '/rooms/:room_id/messages',
+  '/rooms/:thread_id/messages',
   auth(),
-  ChatController.GetMessagesByRoomId,
+  ChatController.GetMessagesByThreadId,
 );
 
-router.patch(
-  '/messages',
-  auth(),
-  validateRequest(ChatValidation.EditMessageSchema),
-  ChatController.EditMessage,
-);
-
-router.delete(
-  '/messages',
-  auth(),
-  validateRequest(ChatValidation.DeleteMessageSchema),
-  ChatController.DeleteMessage,
-);
-
-router.post(
-  '/messages/read',
-  auth(),
-  validateRequest(ChatValidation.MarkAsReadSchema),
-  ChatController.MarkMessageAsRead,
-);
-
-// File upload route with Cloudinary integration
 router.post(
   '/messages/file',
   auth(),
@@ -80,28 +58,6 @@ router.post(
   },
   validateRequest(ChatValidation.SendMessageSchema),
   ChatController.SendMessage,
-);
-
-// Group management routes
-router.post(
-  '/rooms/users',
-  auth(),
-  validateRequest(ChatValidation.AddUserToRoomSchema),
-  ChatController.AddUserToRoom,
-);
-
-router.delete(
-  '/rooms/users',
-  auth(),
-  validateRequest(ChatValidation.RemoveUserFromRoomSchema),
-  ChatController.RemoveUserFromRoom,
-);
-
-router.patch(
-  '/rooms/users/role',
-  auth(),
-  validateRequest(ChatValidation.UpdateRoleSchema),
-  ChatController.UpdateRoomAdmin,
 );
 
 export const ChatRoutes = router;

@@ -1,107 +1,57 @@
-import { ChatType, MessageStatus, MessageType, UserRole } from '@prisma/client';
-
-export interface IChatRoom {
+export interface IThread {
   id: string;
-  name?: string;
-  type: ChatType;
-  participants: IChatRoomUser[];
+  participants: IThreadUser[];
 }
 
-export interface IChatMessage {
+export interface IMessage {
   id: string;
   content: string;
   sender_id: string;
-  room_id: string;
-  type: MessageType;
+  thread_id: string;
   file_url?: string;
   edited: boolean;
   deleted: boolean;
-  created_at: Date;
-  updated_at: Date;
-  read_by: IMessageStatus[];
+  sender?: IUser;
 }
 
-export interface IMessageStatus {
+export interface IThreadUser {
   id: string;
-  message_id: string;
+  thread_id: string;
   user_id: string;
-  status: MessageStatus;
   created_at: Date;
-  updated_at: Date;
+  user?: IUser;
 }
 
-export interface IChatRoomUser {
+export interface IUser {
   id: string;
-  room_id: string;
-  user_id: string;
-  role: UserRole;
-  created_at: Date;
+  name: string;
+  email: string;
+  image?: string;
+  is_online: boolean;
+  last_seen?: Date;
 }
 
-export interface ITypingStatus {
-  id: string;
-  room_id: string;
-  user_id: string;
-  is_typing: boolean;
-  created_at: Date;
-  updated_at: Date;
-}
-
-export interface ICreateRoom {
-  name?: string;
-  type: ChatType;
+export interface ICreateThread {
   participants: string[];
-}
-
-export interface IAddUserToRoom {
-  room_id: string;
-  user_id: string;
-  role?: UserRole;
-}
-
-export interface IRemoveUserFromRoom {
-  room_id: string;
-  user_id: string;
-}
-
-export interface IUpdateRoomAdmin {
-  room_id: string;
-  user_id: string;
-  role: UserRole;
 }
 
 export interface ISendMessage {
   content: string;
   sender_id: string;
-  room_id: string;
-  type?: MessageType;
+  thread_id: string;
   file_url?: string;
 }
 
 export interface IEditMessage {
+  thread_id: string;
   message_id: string;
+  sender_id: string;
   content: string;
-  sender_id: string;
-}
-
-export interface IDeleteMessage {
-  message_id: string;
-  sender_id: string;
-}
-
-export interface IMarkMessageAsRead {
-  message_id: string;
-  user_id: string;
-}
-
-export interface ITypingIndicator {
-  room_id: string;
-  user_id: string;
-  is_typing: boolean;
 }
 
 export interface IUserPresence {
   user_id: string;
   is_online: boolean;
   socket_id?: string;
+  last_seen?: Date;
 }

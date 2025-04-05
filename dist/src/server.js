@@ -16,10 +16,13 @@ const app_1 = __importDefault(require("./app"));
 const config_1 = __importDefault(require("./app/config"));
 const http_1 = __importDefault(require("http"));
 const socket_1 = require("./socket");
-process.on('uncaughtException', (error) => {
-    console.log('Uncaught Exception! Shutting down the server due to uncaught exception...', error);
-    process.exit(1);
-});
+// process.on('uncaughtException', (error) => {
+//   console.log(
+//     'Uncaught Exception! Shutting down the server due to uncaught exception...',
+//     error,
+//   );
+//   process.exit(1);
+// });
 const server = http_1.default.createServer(app_1.default);
 // Initialize socket.io
 (0, socket_1.initializeSocket)(server);
@@ -43,11 +46,11 @@ function startServer() {
     });
 }
 startServer();
-process.on('SIGTERM', () => {
-    console.log('SIGTERM received. Shutting down gracefully...');
-    if (server) {
-        server.close(() => {
-            console.log('Server closed');
-        });
-    }
-});
+// process.on('SIGTERM', () => {
+//   console.log('SIGTERM received. Shutting down gracefully...');
+//   if (server) {
+//     server.close(() => {
+//       console.log('Server closed');
+//     });
+//   }
+// });
